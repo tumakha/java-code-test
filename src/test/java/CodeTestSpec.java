@@ -1,5 +1,9 @@
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.function.Function;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -17,6 +21,10 @@ import static org.junit.Assert.assertEquals;
  */
 
 public class CodeTestSpec {
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Test
     public void reverseArray_returnsExpectedResult() {
         // arrange
@@ -73,10 +81,42 @@ public class CodeTestSpec {
 
     @Test
     public void writeContentsToConsole_returnsExpectedResult() {
+        String EXPECTED = "File content:\n" +
+            "-- 1.\tCreate a query to return the unique rows in a table\n" +
+            "\n" +
+            "SELECT DISTINCT * FROM table_name;\n" +
+            "\n" +
+            "-- 2.\tWrite a command to insert values into a table\n" +
+            "\n" +
+            "INSERT INTO table_name (id, name)\n" +
+            "VALUES\n" +
+            "    (1, 'name1'),\n" +
+            "    (2, 'name2');\n" +
+            "\n" +
+            "-- 3.\tCreate a query that joins two tables together. Note, all rows from the first table must be in the " +
+            "result-set (e.g. given customer and order tables, return all customers and any orders for each customer)\n" +
+            "\n" +
+            "SELECT c.*, o.*, COUNT(o.order_id) from CUSTOMER c\n" +
+            "LEFT JOIN CUSTOMER_ORDER o ON c.customer_id = o.customer_id\n" +
+            "GROUP BY c.customer_id\n\n";
+
+        PrintStream origSysOut = System.out;
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+
+        CodeTest.writeContentsToConsole();
+
+        assertEquals(EXPECTED, outContent.toString());
+
+        System.setOut(origSysOut);
     }
 
     @Test
     public void handleInvalidArgument_returnsExpectedResult() {
+        thrown.expect(AssertionError.class);
+        thrown.expectMessage("Only numbers are allowed. Invalid argument: zz");
+
+        CodeTest.main(new String[] {"1","3","5","5","zz", "99"});
     }
 
     @Test
